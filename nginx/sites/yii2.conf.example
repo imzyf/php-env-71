@@ -11,7 +11,7 @@ server {
 
     server_name yii2.test;
     root /var/www/yii2/web;
-    index index.php index.html index.htm;
+    index index.php;
 
     location / {
          try_files $uri $uri/ /index.php$is_args$args;
@@ -25,7 +25,7 @@ server {
         fastcgi_buffer_size 32k;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         #fixes timeouts
-        fastcgi_read_timeout 600;
+        fastcgi_read_timeout 1200;
         include fastcgi_params;
     }
 
