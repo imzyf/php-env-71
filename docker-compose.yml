@@ -14,6 +14,8 @@ volumes:
     driver: ${VOLUMES_DRIVER} 
   mongo:
     driver: ${VOLUMES_DRIVER}
+  kafka-ui:
+    driver: ${VOLUMES_DRIVER}
 
 services:
 
@@ -24,8 +26,13 @@ services:
         args:
           - BASE_IMAGE_TAG_PREFIX=${WORKSPACE_BASE_IMAGE_TAG_PREFIX}
           - LARADOCK_PHP_VERSION=${PHP_VERSION}
+          - http_proxy
+          - https_proxy
+          - no_proxy
       volumes:
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        # - docker-in-docker:/certs/client
+        # - ./php-worker/supervisord.d:/etc/supervisord.d
       extra_hosts:
         - "dockerhost:${DOCKER_HOST_IP}"
       ports:
@@ -37,7 +44,7 @@ services:
         - "${WORKSPACE_ANGULAR_CLI_SERVE_HOST_PORT}:4200"
         - "${WORKSPACE_VITE_PORT}:5173"
         # swoft
-        - "18306:18306"
+        - "18306"
       tty: true
       environment:
         - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
@@ -49,6 +56,8 @@ services:
       networks:
         - frontend
         - backend
+      # links:
+      #   - docker-in-docker
 
 ### PHP-FPM ##############################################
     php-fpm:
@@ -57,15 +66,20 @@ services:
         args:
           - BASE_IMAGE_TAG_PREFIX=${PHP_FPM_BASE_IMAGE_TAG_PREFIX}
           - LARADOCK_PHP_VERSION=${PHP_VERSION}
+          - http_proxy
+          - https_proxy
+          - no_proxy
       volumes:
         - ./php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        # - docker-in-docker:/certs/client
       expose:
         - "9000"
       extra_hosts:
         - "dockerhost:${DOCKER_HOST_IP}"
       environment:
-        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG} 
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - DOCKER_HOST=tcp://docker-in-docker:2376
         - DOCKER_TLS_VERIFY=1
         - DOCKER_TLS_CERTDIR=/certs
         - DOCKER_CERT_PATH=/certs/client
@@ -100,6 +114,8 @@ services:
       networks:
         - frontend
         - backend
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
 
 ### MySQL ################################################
     mysql:
@@ -129,5 +145,17 @@ services:
       command: --requirepass ${REDIS_PASSWORD}
       ports:
         - "${REDIS_PORT}:6379"
+      networks:
+        - backend
+
+### Kafka-UI ################################################
+    kafka-ui:
+      build: ./kafka-ui
+      environment:
+        - DYNAMIC_CONFIG_ENABLED=true
+      volumes:
+        - ./kafka-ui/kui:/etc/kafkaui
+      ports:
+        - "8808:8080"
       networks:
         - backend
