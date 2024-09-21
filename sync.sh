@@ -55,6 +55,7 @@ fi
 if [ "$1" == "up" ] ; then
     print_style "Initializing Docker Sync\n" "info"
     print_style "May take a long time (15min+) on the first run\n" "info"
+    docker-sync start;
 
     print_style "Initializing Docker Compose\n" "info"
     shift # removing first argument
@@ -65,10 +66,22 @@ elif [ "$1" == "down" ]; then
     docker-compose stop
 
     print_style "Stopping Docker Sync\n" "info"
+    docker-sync stop
 
 elif [ "$1" == "bash" ]; then
     docker-compose exec --user=laradock workspace bash
 
+elif [ "$1" == "install" ]; then
+    print_style "Installing docker-sync\n" "info"
+    gem install docker-sync
+
+elif [ "$1" == "sync" ]; then
+    print_style "Manually triggering sync between host and docker-sync container.\n" "info"
+    docker-sync sync;
+
+elif [ "$1" == "clean" ]; then
+    print_style "Removing and cleaning up files from the docker-sync container.\n" "warning"
+    docker-sync clean
 else
     print_style "Invalid arguments.\n" "danger"
     display_options
