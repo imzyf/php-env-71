@@ -45,6 +45,10 @@ services:
         - "${WORKSPACE_VITE_PORT}:5173"
         # swoft
         - "18306"
+        # hyperf
+        - "9501"
+        - "9502"
+        - "9503"
       tty: true
       environment:
         - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
